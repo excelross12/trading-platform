@@ -2,15 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens ──────────────────────────────────────────────────────── */
 :root {
-  --bg: #0f172a;       /* slate-900 */
-  --surface: #1e293b;  /* slate-800 */
-  --border: #334155;   /* slate-700 */
-  --text: #f1f5f9;     /* slate-100 */
-  --muted: #94a3b8;    /* slate-400 */
+  --bg:          #060b14;
+  --surface:     #0d1626;
+  --surface-2:   #111f35;
+  --border:      rgba(99,179,237,0.1);
+  --border-glow: rgba(99,179,237,0.25);
+  --text:        #e2eaf4;
+  --muted:       #64748b;
+  --green:       #10b981;
+  --red:         #f43f5e;
+  --accent:      #3b82f6;
 }
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
   color: var(--text);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Mesh gradient background ────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%,  rgba(59,130,246,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(16,185,129,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 50%,  rgba(99,102,241,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99,179,237,0.4); }
+
+/* ── Glass card utility ──────────────────────────────────────────────────── */
+@layer components {
+  .glass {
+    background: rgba(13, 22, 38, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(99,179,237,0.1);
+  }
+
+  .glass-strong {
+    background: rgba(13, 22, 38, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99,179,237,0.15);
+  }
+
+  .glow-green { box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+  .glow-red   { box-shadow: 0 0 20px rgba(244,63,94,0.15);  }
+  .glow-blue  { box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+
+  .gradient-border {
+    position: relative;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(16,185,129,0.2), rgba(99,102,241,0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .badge-buy  { @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20; }
+  .badge-sell { @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10  text-rose-400  border border-rose-500/20; }
+}
+
+/* ── GSAP initial states (prevent flash) ────────────────────────────────── */
+[data-gsap="fade-up"]    { opacity: 0; transform: translateY(24px); }
+[data-gsap="fade-in"]    { opacity: 0; }
+[data-gsap="fade-right"] { opacity: 0; transform: translateX(-20px); }
+[data-gsap="scale-in"]   { opacity: 0; transform: scale(0.96); }
+
+/* ── Shimmer skeleton ────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* ── Pulse dot ───────────────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+.pulse-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--green);
 }

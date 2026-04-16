@@ -1,17 +1,15 @@
-// Home — equity curve + open positions + PnL summary
-// ✦ Server Component: fetches data server-side, no client bundle cost
-
 import { getTrades, getEquityCurve, getLatestEquity } from '@/lib/db'
 import type { Trade, EquitySnapshot } from '@/types'
 import EquityCurve from '@/components/EquityCurve'
 import PositionsTable from '@/components/PositionsTable'
+import AnimatedStatCard from '@/components/AnimatedStatCard'
+import PageWrapper from '@/components/PageWrapper'
 
-export const revalidate = 30  // ISR: refresh every 30s
+export const revalidate = 30
 
 export default async function HomePage() {
-  // ✦ Parallel fetch — no waterfall
   const [openTrades, equityCurve, latestEquity] = await Promise.all([
-    getTrades({ status: 'open',   limit: 20 }).then((r) => r.trades),
+    getTrades({ status: 'open', limit: 20 }).then((r) => r.trades),
     getEquityCurve(200),
     getLatestEquity(),
   ]).catch((): [Trade[], EquitySnapshot[], null] => [[], [], null])
@@ -24,51 +22,75 @@ export default async function HomePage() {
   const balance = latestEquity?.balance ?? 0
 
   return (
-    <div className="space-y-8">
-      {/* ── PnL summary cards ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Equity"       value={`$${equity.toFixed(2)}`}  />
-        <StatCard label="Balance"      value={`$${balance.toFixed(2)}`} />
-        <StatCard label="Open Trades"  value={String(openTrades.length)} />
-        <StatCard
-          label="Realised PnL"
+    <PageWrapper>
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-white">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Live performance overview</p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl glass text-xs text-slate-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(16,185,129,0.8)]" />
+          Demo account
+        </div>
+      </div>
+
+      {/* ── Stat cards ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <AnimatedStatCard
+          label="Equity"     icon="💰"
+          value={`$${equity.toFixed(2)}`}
+          rawNum={equity}
+          trend="neutral"    delay={0}
+        />
+        <AnimatedStatCard
+          label="Balance"    icon="🏦"
+          value={`$${balance.toFixed(2)}`}
+          rawNum={balance}
+          trend="neutral"    delay={0.07}
+        />
+        <AnimatedStatCard
+          label="Open Trades" icon="📊"
+          value={String(openTrades.length)}
+          rawNum={openTrades.length}
+          trend="neutral"    delay={0.14}
+        />
+        <AnimatedStatCard
+          label="Realised PnL" icon={closedPnl >= 0 ? '📈' : '📉'}
           value={`${closedPnl >= 0 ? '+' : ''}$${closedPnl.toFixed(2)}`}
-          color={closedPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}
+          rawNum={closedPnl}
+          trend={closedPnl > 0 ? 'up' : closedPnl < 0 ? 'down' : 'neutral'}
+          delay={0.21}
         />
       </div>
 
-      {/* ── Equity curve ──────────────────────────────────────────────── */}
-      <section className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-        <h2 className="text-sm font-semibold text-slate-400 mb-4 uppercase tracking-wider">
-          Equity Curve
-        </h2>
+      {/* ── Equity curve ─────────────────────────────────────────────────── */}
+      <div className="glass rounded-2xl p-6 gradient-border">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+            Equity Curve
+          </h2>
+          <span className="text-xs text-slate-600 tabular-nums">
+            {equityCurve.length} data points
+          </span>
+        </div>
         <EquityCurve data={equityCurve} />
-      </section>
+      </div>
 
-      {/* ── Open positions ────────────────────────────────────────────── */}
-      <section className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-        <h2 className="text-sm font-semibold text-slate-400 mb-4 uppercase tracking-wider">
-          Open Positions
-        </h2>
+      {/* ── Open positions ───────────────────────────────────────────────── */}
+      <div className="glass rounded-2xl p-6 gradient-border">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+            Open Positions
+          </h2>
+          {openTrades.length > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              {openTrades.length} active
+            </span>
+          )}
+        </div>
         <PositionsTable trades={openTrades} />
-      </section>
-    </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  color = 'text-white',
-}: {
-  label: string
-  value: string
-  color?: string
-}) {
-  return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
-    </div>
+      </div>
+    </PageWrapper>
   )
 }
